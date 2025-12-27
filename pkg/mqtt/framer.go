@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/grafana/grafana-plugin-sdk-go/backend/log"
 	"github.com/grafana/grafana-plugin-sdk-go/data"
 	jsoniter "github.com/json-iterator/go"
+
+	"github.com/grafana/mqtt-datasource/pkg/protoc"
 )
 
 type framer struct {
@@ -105,14 +108,20 @@ func (df *framer) toFrame(messages []Message, logger log.Logger) (*data.Frame, e
 	}
 
 	for _, message := range messages {
-		df.iterator = jsoniter.ParseBytes(jsoniter.ConfigDefault, message.Value)
-		err := df.next(logger)
-		if err != nil {
-			// If JSON parsing fails, treat the raw bytes as a string value
-			logger.Debug("JSON parsing failed, treating as raw string", "error", err, "value", string(message.Value))
-			rawValue := string(message.Value)
-			df.addValue(data.FieldTypeNullableString, &rawValue)
+		// df.iterator = jsoniter.ParseBytes(jsoniter.ConfigDefault, message.Value)
+		// err := df.next(logger)
+		item := &protoc.ServerData{}
+		if err := proto.Unmarshal(message.Value, item); err != nil {
+			logger.Debug("Protobuf parsing failed!")
+			continue
 		}
+		df.addValue(data.FieldTypeFloat32, item.Values[len(item.Values)-1])
+		// if err != nil {
+		// 	// If JSON parsing fails, treat the raw bytes as a string value
+		// 	logger.Debug("JSON parsing failed, treating as raw string", "error", err, "value", string(message.Value))
+		// 	rawValue := string(message.Value)
+		// 	df.addValue(data.FieldTypeNullableString, &rawValue)
+		// }
 		df.fields[0].Append(message.Timestamp)
 		df.extendFields(df.fields[0].Len() - 1)
 	}
