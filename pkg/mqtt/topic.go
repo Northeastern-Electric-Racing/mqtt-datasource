@@ -37,7 +37,9 @@ func (t *Topic) ToDataFrame(logger log.Logger) (*data.Frame, error) {
 	if t.framer == nil {
 		t.framer = newFramer()
 	}
-	return t.framer.toFrame(t.Messages, logger)
+	topic, _ := decodeTopic(t.Path, logger)
+
+	return t.framer.toFrame(t.Messages, topic, logger)
 }
 
 // TopicMap is a thread-safe map of topics

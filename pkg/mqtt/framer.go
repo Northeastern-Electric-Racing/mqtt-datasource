@@ -61,7 +61,7 @@ func (df *framer) key() string {
 	if len(df.path) == 0 {
 		return "Value"
 	}
-	return strings.Join(df.path, "")
+	return strings.Join(df.path, "/")
 }
 
 func (df *framer) addNil(logger log.Logger) {
@@ -99,13 +99,15 @@ func newFramer() *framer {
 	return df
 }
 
-func (df *framer) toFrame(messages []Message, logger log.Logger) (*data.Frame, error) {
+func (df *framer) toFrame(messages []Message, path string, logger log.Logger) (*data.Frame, error) {
 	// clear the data in the fields
 	for _, field := range df.fields {
 		for i := field.Len() - 1; i >= 0; i-- {
 			field.Delete(i)
 		}
 	}
+
+	df.path = strings.Split(path, "/")
 
 	for _, message := range messages {
 		// df.iterator = jsoniter.ParseBytes(jsoniter.ConfigDefault, message.Value)
@@ -126,7 +128,7 @@ func (df *framer) toFrame(messages []Message, logger log.Logger) (*data.Frame, e
 		df.extendFields(df.fields[0].Len() - 1)
 	}
 
-	return data.NewFrame("mqtt", df.fields...), nil
+	return data.NewFrame("mqtt", df.fields...).SetRefID(df.key()), nil
 }
 
 func (df *framer) extendFields(idx int) {
