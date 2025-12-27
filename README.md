@@ -74,3 +74,18 @@ NOTE: The `yarn build` command above might fail on a non-unix-like system, like 
 2. From the top-right corner, click the **Add data source** button.
 3. Search for `MQTT` in the search field, and hover over the MQTT search result.
 4. Click the **Select** button for MQTT.
+
+
+## NER
+
+Added support for the Odyssey protobuf.  Used:
+```
+protoc -I=. --go_out=. --go_opt=paths=source_relative ./pkg/protoc/serverdata.proto
+```
+Built and uploaded the zip:
+```
+npm installl
+npm run build
+mage
+mv dist/ grafana-mqtt-datasource
+```
